@@ -14,6 +14,7 @@ Each report section is one plain SQL file you can run on its own. A small
 Python script runs them for one time window (like `awrrpt.sql`) or two (like
 `awrddrpt.sql`) and lays the results out in AWR reading order.
 
+[Try it in a minute](#try-it-in-a-minute) ·
 [What it found](#what-it-found-one-harmless-sentence) ·
 [Use it on your own agent](#use-it-on-your-own-agent) ·
 [AWR to ASHWA mapping](#why-the-awr-method-applied-to-agents) ·
@@ -26,6 +27,27 @@ Python script runs them for one time window (like `awrrpt.sql`) or two (like
 *The same refund task, before (A) and after (B) one sentence was added to the
 agent's instructions. A new tool sequence for a familiar task is the agent
 equivalent of a new plan hash value for the same SQL_ID.*
+
+## Try it in a minute
+
+No Langfuse, no database server, no API key. The repository bundles the traces
+from its reference experiment (144 agent turns, 77 KB), and `--demo` runs the
+same SQL files over them with [chdb](https://github.com/chdb-io/chdb), an
+embedded ClickHouse:
+
+```bash
+git clone https://github.com/smpawar/ashwa && cd ashwa
+python3 -m venv .venv && .venv/bin/pip install chdb
+.venv/bin/python ashwa_report.py --demo --html report.html
+```
+
+That prints the compare report (prompt v1 against prompt v2) and writes the
+HTML copy. Add `--run` for a single-run report. chdb runs on macOS and Linux;
+on Windows, use WSL.
+
+The demo files in `demo/` hold only what the SQL reads: span names, types,
+timings, token counts and costs. Prompt and reply text is replaced by a hash.
+`scripts/export_demo_data.py` shows exactly how they were produced.
 
 ## What it found: one "harmless" sentence
 
@@ -90,13 +112,14 @@ Two windows, like `awrddrpt.sql`:
   --from "..." --to "..." --compare-from "..." --compare-to "..."
 ```
 
-Four settings adapt the report to your system:
+These settings adapt the report to your system:
 
 | Flag | Meaning | Default (this repo's experiment) |
 |---|---|---|
 | `--root-name` | Name of the top-level span that represents one agent turn | `support_turn` |
 | `--tool` | Extra span names to count as tool calls (spans Langfuse already types as tools are found automatically); repeatable | the experiment's four tools |
 | `--success-score` | Name of a 0-to-1 Langfuse score that marks a successful conversation | `task_success` |
+| `--demo` | Read the bundled experiment data in `demo/` instead of a Langfuse ClickHouse | off |
 | `--task-tag` | Trace tag prefix that names the type of task, used to group trajectories | `scenario:` |
 
 `--prefix` and `--compare-prefix` restrict a window to sessions whose ID starts

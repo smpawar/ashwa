@@ -18,6 +18,10 @@ The experiment in this folder (v1 vs v2 phases of a batch in runs.json):
     .venv/bin/python ashwa_report.py --batch                # latest batch
     .venv/bin/python ashwa_report.py --batch BATCH_ID --html report.html
 
+No Langfuse to hand? Run the same SQL over the experiment data bundled in demo/
+(needs `pip install chdb`, an embedded ClickHouse; no server, no API key):
+    python ashwa_report.py --demo --html report.html
+
 Times are UTC. --prefix / --compare-prefix restrict a window to sessions whose
 id starts with a prefix. Defaults for --root-name, --tool, --success-score and
 --task-tag match this experiment; override them for other agentic systems.
@@ -31,11 +35,16 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
-import clickhouse_connect
-from dotenv import load_dotenv
-
 HERE = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(HERE, ".env"))
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(HERE, ".env"))
+except ImportError:      # optional: --demo needs no settings
+    pass
+
+RUNS_FILE = os.path.join(HERE, "runs.json")
+DEMO_DIR = os.path.join(HERE, "demo")
+SOURCE = "Langfuse ClickHouse"
 
 SECTIONS = ["01_load_profile", "02_time_model", "03a_top_model_calls", "03b_top_tools",
             "04a_efficiency", "04b_quality", "05_trajectories"]
@@ -54,10 +63,45 @@ class Scope:
 # ---------------------------------------------------------------- data
 
 def client():
+    import clickhouse_connect
     return clickhouse_connect.get_client(
         host=os.environ.get("CLICKHOUSE_HOST", "localhost"), port=int(os.environ.get("CLICKHOUSE_PORT", 8123)),
         username=os.environ.get("CLICKHOUSE_USER", "clickhouse"),
         password=os.environ.get("CLICKHOUSE_PASSWORD", "clickhouse"))
+
+
+class DemoResult:
+    def __init__(self, column_names, result_rows):
+        self.column_names, self.result_rows = column_names, result_rows
+
+
+class DemoClient:
+    """Runs the section SQL over the Parquet files in demo/ with chdb (ClickHouse embedded in Python)."""
+
+    def __init__(self):
+        try:
+            from chdb import session
+        except ImportError:
+            raise SystemExit("--demo needs chdb, an embedded ClickHouse: pip install chdb")
+        self.session = session.Session()
+        self.session.query("SET session_timezone = 'UTC'")
+        for table in ("events_core", "scores"):
+            path = os.path.join(DEMO_DIR, f"{table}.parquet").replace("'", "\\'")
+            self.session.query(f"CREATE TABLE {table} ENGINE = Memory AS SELECT * FROM file('{path}', Parquet)")
+
+    @staticmethod
+    def literal(v):
+        if isinstance(v, datetime):
+            return v.strftime("%Y-%m-%d %H:%M:%S.%f")
+        if isinstance(v, (list, tuple)):
+            return "[" + ",".join("'" + str(x).replace("\\", "\\\\").replace("'", "\\'") + "'" for x in v) + "]"
+        return str(v)
+
+    def query(self, sql, parameters):
+        out = self.session.query(sql + "\nSETTINGS output_format_json_quote_64bit_integers = 0", "JSONCompact",
+                                 params={k: self.literal(v) for k, v in parameters.items()})
+        res = json.loads(out.bytes())
+        return DemoResult([c["name"] for c in res["meta"]], res["data"])
 
 
 def collect(ch, scope: Scope, opts) -> dict:
@@ -487,7 +531,7 @@ def html_report(sa, da, sb=None, db=None, spread_rows=None) -> str:
     return (f"<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' "
             f"content='width=device-width,initial-scale=1'><title>{name}</title><style>{CSS}</style></head>"
             f"<body><main>{''.join(parts)}<p class='note'>Generated {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC "
-            f"from Langfuse ClickHouse by ashwa_report.py. Section SQL: sql/*.sql.</p></main></body></html>")
+            f"from {SOURCE} by ashwa_report.py. Section SQL: sql/*.sql.</p></main></body></html>")
 
 
 # ---------------------------------------------------------------- scopes
@@ -497,7 +541,7 @@ def parse_time(s):
 
 
 def batch_scopes(batch_id):
-    runs = json.load(open(os.path.join(HERE, "runs.json")))
+    runs = json.load(open(RUNS_FILE))
     batch_id = batch_id or runs[-1].get("batch")
     scopes, per_run = [], []
     for version in ("v1", "v2"):
@@ -521,7 +565,7 @@ def batch_scopes(batch_id):
 
 
 def run_scope(phase_id):
-    runs = json.load(open(os.path.join(HERE, "runs.json")))
+    runs = json.load(open(RUNS_FILE))
     r = next((r for r in runs if r["phase_id"] == phase_id), None) if phase_id else runs[-1]
     if r is None:
         raise SystemExit(f"Run {phase_id} not found in runs.json.")
@@ -540,6 +584,8 @@ def main():
     ap.add_argument("--compare-prefix", action="append", default=[])
     ap.add_argument("--run", nargs="?", const="", help="single report for one run in runs.json (default: latest)")
     ap.add_argument("--batch", nargs="?", const="", help="experiment batch from runs.json (default: latest)")
+    ap.add_argument("--demo", action="store_true",
+                    help="use the experiment data bundled in demo/ instead of a Langfuse ClickHouse (needs chdb)")
     ap.add_argument("--html", help="also write the report as HTML to this path")
     ap.add_argument("--project", default="local-project")
     ap.add_argument("--root-name", action="append", default=None, help="top-level span name of a turn (repeatable)")
@@ -550,6 +596,13 @@ def main():
     o.root_name = o.root_name if o.root_name is not None else ["support_turn"]
     o.tool = o.tool if o.tool is not None else ["lookup_order", "search_knowledge_base", "issue_refund", "escalate_to_human"]
 
+    if o.demo:
+        global RUNS_FILE, SOURCE
+        RUNS_FILE, SOURCE = os.path.join(DEMO_DIR, "runs.json"), "the bundled demo data (demo/*.parquet)"
+        print("Demo mode: running sql/*.sql over the experiment data bundled in demo/.")
+        if o.run is None and not o.start:
+            o.batch = o.batch or ""     # default for the demo: the v1 vs v2 compare report
+
     if o.run is not None:
         sa, sb, runs = run_scope(o.run or None), None, None
     elif o.batch is not None:
@@ -557,7 +610,7 @@ def main():
     else:
         runs = None
         if not (o.start and o.end):
-            ap.error("give --from and --to, or --batch")
+            ap.error("give --from and --to, or --batch, or --demo")
         a0, a1 = parse_time(o.start), parse_time(o.end)
         sa = Scope("A", a0, a1, (a1 - a0).total_seconds(), o.prefix, f"sessions {o.prefix}" if o.prefix else "")
         sb = None
@@ -567,7 +620,7 @@ def main():
             sb = Scope("B", b0, b1, (b1 - b0).total_seconds(), o.compare_prefix,
                        f"sessions {o.compare_prefix}" if o.compare_prefix else "")
 
-    ch = client()
+    ch = DemoClient() if o.demo else client()
     da = collect(ch, sa, o)
     if not da["01_load_profile"][0]["turns"]:
         raise SystemExit(f"No turns found for A ({sa.start} to {sa.end}, prefixes {sa.prefixes}, roots {o.root_name}).")

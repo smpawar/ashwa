@@ -24,3 +24,8 @@ jobs:
         run: python ashwa_report.py --help > /dev/null
       - name: SQL sections share the same scope
         run: python scripts/check_sql_scope.py
+      - name: Demo report reproduces the published figures
+        run: |
+          pip install chdb
+          python ashwa_report.py --demo --html demo-report.html | tee demo-report.txt
+          python scripts/check_demo_figures.py demo-report.txt

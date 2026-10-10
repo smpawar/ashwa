@@ -12,3 +12,6 @@ psycopg-pool==3.3.3
 pgvector==0.5.1
 python-dotenv==1.2.4
 clickhouse-connect==1.10.0
+
+# Optional: only for `ashwa_report.py --demo` (embedded ClickHouse, about 350 MB installed).
+# chdb==4.4.0

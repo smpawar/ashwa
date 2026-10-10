@@ -20,8 +20,10 @@ merge.
 
 ## Setup
 
-To work on the report and SQL you need Python 3.12 and a self-hosted Langfuse
-v4 with ClickHouse reachable. You do not need an API key.
+To work on the report and SQL you need Python 3.12. For most changes the
+bundled demo data is enough (`pip install chdb`, then
+`python ashwa_report.py --demo`). To run against live traces you need a
+self-hosted Langfuse v4 with ClickHouse reachable. You do not need an API key.
 
 ```bash
 git clone https://github.com/smpawar/ashwa && cd ashwa
@@ -43,9 +45,10 @@ model API: about $0.017 per turn on the default model.
    ```bash
    python scripts/check_sql_scope.py
    ```
-3. **A change to how a metric is calculated needs a before-and-after.** Run the
-   report on the committed experiment data before and after your change and
-   put both in the pull request, so reviewers can see the effect. The published
+3. **A change to how a metric is calculated needs a before-and-after.** Run
+   `python ashwa_report.py --demo` (the committed experiment data; needs
+   `pip install chdb`, no Langfuse) before and after your change and put both
+   in the pull request, so reviewers can see the effect. The published
    figures in the README must still reproduce, or the pull request must say
    why they changed.
 4. **Never commit `.env`** or anything else containing a key.
