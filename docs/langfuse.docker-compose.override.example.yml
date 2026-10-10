@@ -1,0 +1,16 @@
+# Example override for a local, self-hosted Langfuse used with ASHWA.
+# Copy to the root of your Langfuse clone as docker-compose.override.yml, then: docker compose up -d
+# It pre-creates a local user, project and API keys so nothing has to be clicked through.
+# These are local test values. Do not use them on a server other people can reach.
+services:
+  langfuse-web:
+    environment:
+      LANGFUSE_INIT_ORG_ID: local-org
+      LANGFUSE_INIT_ORG_NAME: Local Org
+      LANGFUSE_INIT_PROJECT_ID: local-project
+      LANGFUSE_INIT_PROJECT_NAME: Agent Test
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-local-test
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-local-test
+      LANGFUSE_INIT_USER_EMAIL: me@local.test
+      LANGFUSE_INIT_USER_NAME: Local User
+      LANGFUSE_INIT_USER_PASSWORD: LocalPass123!
