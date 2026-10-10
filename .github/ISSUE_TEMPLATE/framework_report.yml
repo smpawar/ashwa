@@ -1,0 +1,34 @@
+name: Framework report
+description: You ran ASHWA on a different agent framework or trace source
+labels: [framework]
+body:
+  - type: input
+    id: framework
+    attributes:
+      label: Framework and version
+      placeholder: LangGraph 1.2 via the Langfuse callback handler
+    validations:
+      required: true
+  - type: input
+    id: flags
+    attributes:
+      label: Flags you used
+      description: The --root-name, --tool, --success-score and --task-tag values
+      placeholder: --root-name agent_run --tool retrieve_docs
+  - type: textarea
+    id: worked
+    attributes:
+      label: What worked
+      description: Which report sections gave sensible numbers
+    validations:
+      required: true
+  - type: textarea
+    id: didnt
+    attributes:
+      label: What did not
+      description: Sections that were empty or wrong, and span names or types that needed special handling (for example marker spans that should not count as calls)
+  - type: input
+    id: versions
+    attributes:
+      label: Langfuse and ClickHouse versions
+      placeholder: Langfuse 4.54, ClickHouse 25.12

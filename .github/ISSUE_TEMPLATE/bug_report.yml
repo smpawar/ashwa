@@ -1,0 +1,30 @@
+name: Bug report
+description: The report fails, or a number in it looks wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The command you ran and what you got. For a wrong number, name the report section and the value you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or error
+      description: Paste the relevant report lines or the full error. Remove any keys or customer data first.
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Langfuse, ClickHouse, Python
+      placeholder: Langfuse 4.54, ClickHouse 25.12, Python 3.12
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Agent framework and trace source
+      placeholder: Google ADK 2.11 via OpenInference

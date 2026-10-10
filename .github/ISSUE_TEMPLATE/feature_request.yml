@@ -1,0 +1,22 @@
+name: Feature request
+description: A new report section, metric or flag
+labels: [enhancement]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: The question the report should answer
+      description: Each ASHWA section answers one diagnostic question. What is yours?
+      placeholder: How much of Agent Time is spent waiting on rate limits?
+    validations:
+      required: true
+  - type: textarea
+    id: awr
+    attributes:
+      label: AWR counterpart, if there is one
+      placeholder: Wait class "Concurrency" in Top Foreground Events
+  - type: textarea
+    id: data
+    attributes:
+      label: Where the data would come from
+      description: Which span types, attributes or scores in Langfuse hold what is needed

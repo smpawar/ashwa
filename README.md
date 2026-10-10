@@ -1,5 +1,10 @@
 # ASHWA: Agentic System Health & Workload Analysis
 
+[![CI](https://github.com/smpawar/ashwa/actions/workflows/ci.yml/badge.svg)](https://github.com/smpawar/ashwa/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
+![Langfuse v4](https://img.shields.io/badge/Langfuse-v4%20self--hosted-orange.svg)
+
 **An AWR-style diagnostic report for AI agents.** If you can read an Oracle AWR
 report, you can read this: a load profile, a time model, top calls, efficiency
 ratios, execution plans and a compare-periods report, built from the traces
@@ -9,31 +14,18 @@ Each report section is one plain SQL file you can run on its own. A small
 Python script runs them for one time window (like `awrrpt.sql`) or two (like
 `awrddrpt.sql`) and lays the results out in AWR reading order.
 
+[What it found](#what-it-found-one-harmless-sentence) ·
+[Use it on your own agent](#use-it-on-your-own-agent) ·
+[AWR to ASHWA mapping](#why-the-awr-method-applied-to-agents) ·
+[Report sections](#the-report-sections) ·
+[Reproduce the experiment](docs/EXPERIMENT.md) ·
+[Roadmap](#roadmap)
+
 ![Refund trajectories before and after a one-sentence prompt change](figures/fig3_refund_trajectories.png)
 
 *The same refund task, before (A) and after (B) one sentence was added to the
 agent's instructions. A new tool sequence for a familiar task is the agent
 equivalent of a new plan hash value for the same SQL_ID.*
-
-## Why
-
-Agent tracing tools collect plenty of data but offer dashboards, not a method.
-AWR gives a DBA an accounting identity (where did the time go), a fixed reading
-order, and a way to compare a good period with a bad one. ASHWA applies that
-structure to agents:
-
-**Agent Time = model time + tool time + retrieval time + orchestration time + time waiting on rate limits, retries or humans**
-
-| AWR concept | ASHWA equivalent |
-|---|---|
-| DB Time | Agent Time: the sum of all turn durations |
-| Average Active Sessions | Average active agents: Agent Time ÷ elapsed time |
-| Wait class | Span type: model call, tool call, retrieval, embedding, framework |
-| SQL_ID | A model call plus its model (ideally, a prompt template) |
-| Plan hash value | Trajectory signature: the ordered tool calls in a turn |
-| Snapshot interval | A time window over stored traces |
-| `DBA_HIST_*` repository | Langfuse's ClickHouse tables |
-| `awrrpt.sql` / `awrddrpt.sql` | `ashwa_report.py` and `sql/*.sql` |
 
 ## What it found: one "harmless" sentence
 
@@ -70,22 +62,6 @@ nothing.
 The full reports are in the repository: [`report.html`](report.html) (compare)
 and [`report_latest_run.html`](report_latest_run.html) (single run), with the
 run records in [`runs.json`](runs.json).
-
-## The report sections
-
-| File | Section | AWR counterpart |
-|---|---|---|
-| `sql/01_load_profile.sql` | Header and load profile: turns, Agent Time, average active agents, latency percentiles, calls, tokens, cost | Report header + Load Profile |
-| `sql/02_time_model.sql` | Agent Time split into model, tool code, retrieval/database, embedding, orchestration, error/retry (self time) | Time Model Statistics + Top Foreground Events |
-| `sql/03a_top_model_calls.sql` | Model calls ranked by elapsed time, with p50/p95/p99 and tokens | SQL ordered by Elapsed Time |
-| `sql/03b_top_tools.sql` | Tools, retrieval, SQL and embeddings ranked by elapsed time, with percentiles and error rate | SQL ordered by Executions + Wait Event Histogram |
-| `sql/04a_efficiency.sql` | Steps, tokens and cost per turn; tool error, duplicate-call, re-embedding and prompt-cache rates | Instance Efficiency Percentages |
-| `sql/04b_quality.sql` | Task success rate | (no AWR equivalent) |
-| `sql/05_trajectories.sql` | Tool sequence per turn for each task type, with steps, latency, cost and success | Plan regressions (new plan hash value) |
-
-The compare report adds **6. Biggest changes** (every metric that moved 5% or
-more, largest first, marked better or worse) and, in batch mode, **Run-to-run
-spread** (each run measured separately; overlapping ranges mean noise).
 
 ## Use it on your own agent
 
@@ -139,124 +115,51 @@ cd ../langfuse && docker compose exec -T clickhouse clickhouse-client --password
 `04b_quality.sql` and `05_trajectories.sql` also take `--param_success_score`,
 and `05_trajectories.sql` takes `--param_task_tag_prefix`.
 
+## Why: the AWR method, applied to agents
+
+Agent tracing tools collect plenty of data but offer dashboards, not a method.
+AWR gives a DBA an accounting identity (where did the time go), a fixed reading
+order, and a way to compare a good period with a bad one. ASHWA applies that
+structure to agents:
+
+**Agent Time = model time + tool time + retrieval time + orchestration time + time waiting on rate limits, retries or humans**
+
+| AWR concept | ASHWA equivalent |
+|---|---|
+| DB Time | Agent Time: the sum of all turn durations |
+| Average Active Sessions | Average active agents: Agent Time ÷ elapsed time |
+| Wait class | Span type: model call, tool call, retrieval, embedding, framework |
+| SQL_ID | A model call plus its model (ideally, a prompt template) |
+| Plan hash value | Trajectory signature: the ordered tool calls in a turn |
+| Snapshot interval | A time window over stored traces |
+| `DBA_HIST_*` repository | Langfuse's ClickHouse tables |
+| `awrrpt.sql` / `awrddrpt.sql` | `ashwa_report.py` and `sql/*.sql` |
+
+## The report sections
+
+| File | Section | AWR counterpart |
+|---|---|---|
+| `sql/01_load_profile.sql` | Header and load profile: turns, Agent Time, average active agents, latency percentiles, calls, tokens, cost | Report header + Load Profile |
+| `sql/02_time_model.sql` | Agent Time split into model, tool code, retrieval/database, embedding, orchestration, error/retry (self time) | Time Model Statistics + Top Foreground Events |
+| `sql/03a_top_model_calls.sql` | Model calls ranked by elapsed time, with p50/p95/p99 and tokens | SQL ordered by Elapsed Time |
+| `sql/03b_top_tools.sql` | Tools, retrieval, SQL and embeddings ranked by elapsed time, with percentiles and error rate | SQL ordered by Executions + Wait Event Histogram |
+| `sql/04a_efficiency.sql` | Steps, tokens and cost per turn; tool error, duplicate-call, re-embedding and prompt-cache rates | Instance Efficiency Percentages |
+| `sql/04b_quality.sql` | Task success rate | (no AWR equivalent) |
+| `sql/05_trajectories.sql` | Tool sequence per turn for each task type, with steps, latency, cost and success | Plan regressions (new plan hash value) |
+
+The compare report adds **6. Biggest changes** (every metric that moved 5% or
+more, largest first, marked better or worse) and, in batch mode, **Run-to-run
+spread** (each run measured separately; overlapping ranges mean noise).
+
 ## Reproduce the experiment
 
-A Google ADK agent on Claude (Gemini also supported), backed by Postgres +
-pgvector, traced into a local Langfuse.
+The experiment behind the figures above is a Google ADK agent on Claude (Gemini
+also supported), backed by Postgres + pgvector and traced into a local
+Langfuse. A full run takes about 11 minutes and costs about $2.50.
 
-### Hypothesis, written before the first run
-
-| ASHWA section | Expected change v1 → v2 | What happened |
-|---|---|---|
-| Load profile | Same turns; more tool calls, embeddings and SQL per turn; more tokens per turn | As predicted |
-| Time model | Embedding + database (retrieval) share of Agent Time rises | **Not as predicted:** retrieval is milliseconds; model time stayed at 99% |
-| Top calls | `kb_vector_search` and `embed` climb the ranking | Partly: they were already the top non-model calls; their calls per turn nearly doubled (0.49 → 0.90) |
-| Trajectories | Refunds gain a `search_knowledge_base` step before `issue_refund` | As predicted (the search came after `lookup_order`, not before it) |
-| Hard-parse analogue | The same policy queries get embedded again and again (repeated `content_hash`) | About 50% across the batch, but 0% within one run: the repeats come from re-running the same scripted conversations |
-| Quality | `task_success` roughly unchanged, i.e. the change costs more without helping | **Not as predicted:** 100% → 93.3% |
-
-### Components
-
-| File | Role |
-|---|---|
-| `docker-compose.yml` | Postgres 17 + pgvector on port 5433 (with `pg_stat_statements`) |
-| `seed.py` | Schema, 312 orders (12 scenario orders + 300 background), 24 knowledge-base articles with embeddings (local by default); `reset_phase_state()` |
-| `prompts.py` | v1 and v2 prompts; the only difference between the phases |
-| `agent.py` | ADK agent: `lookup_order`, `search_knowledge_base`, `issue_refund` (30-day and duplicate checks), `escalate_to_human` |
-| `common.py` | Settings (model provider, effort, embeddings); Langfuse spans around every SQL statement (`sql:*`) and embedding call (`embed`, with `content_hash`); choice of ADK trace source |
-| `workload.py` | 20 scripted conversations (24 turns); one trace per turn; outcome-based `task_success` score per conversation; interleaved repeats; phases recorded in `runs.json` |
-| `ashwa_report.py` | The ASHWA report: runs the section SQL for one window or two; text to the terminal, optional HTML |
-| `sql/*.sql` | One query per report section, runnable on their own in `clickhouse-client` |
-| `make_figures.py` | Cuts report sections out of `report.html` unchanged and renders them to PNG in `figures/` (headless Chrome) |
-| `preflight.py` | Checks credentials, model, a one-line test call, embeddings, Langfuse, app database (and that its embeddings match the configured model) and ClickHouse |
-| `requirements.txt` / `requirements.lock` | Pinned direct dependencies / full lock (Python 3.12) |
-| `docs/langfuse.docker-compose.override.example.yml` | Local Langfuse settings: pre-creates the project and API keys the experiment expects |
-
-### Model and embedding setup
-
-| Setting (`.env`) | Default | Notes |
-|---|---|---|
-| `ASHWA_LLM_PROVIDER` | `anthropic` | `gemini` also supported |
-| `ANTHROPIC_API_KEY` | (empty) | Get one at <https://platform.claude.com/settings/keys> |
-| `ASHWA_MODEL` | `claude-opus-5-5` | Or `claude-sonnet-5-5` / `claude-haiku-4-5` to cut cost; `gemini-2.5-flash` for Gemini |
-| `ASHWA_EFFORT` | `medium` | Claude reasoning effort (`low` … `max`); set explicitly so results don't depend on per-model defaults |
-| `ASHWA_EMBED_PROVIDER` | `local` | Anthropic has no embeddings API. `local` runs `BAAI/bge-small-en-v1.5` on this machine via fastembed (no key; first use downloads ~130 MB). `gemini` uses Gemini embeddings |
-
-Claude runs through ADK's own `AnthropicLlm` class, which calls the official
-Anthropic Python SDK. There is no `temperature` setting for Claude: current
-Claude models reject sampling parameters, so run-to-run variation is handled by
-repeats, not by forcing determinism. Server-side refusal fallbacks are
-deliberately **not** enabled: a fallback would switch models mid-run and break
-the like-for-like comparison. A refusal shows up as a failed turn instead.
-
-Measured cost on `claude-opus-5-5` at medium effort: about $0.017 per turn, so
-about $2.50 for the full `--repeat 3` experiment (144 turns). Cheaper models
-cost less in proportion to their token prices.
-
-### Fairness controls
-
-- **Same starting state.** Every phase begins with `reset_phase_state()`: refunds and tickets are cleared, and scenario order dates are re-based on "now", so refund eligibility cannot drift between phases run on different days.
-- **Quality judged on outcomes, not tool calls.** `task_success` checks the database (eligible orders refunded exactly once, ineligible ones not refunded, complaints produce a ticket) and the replies (the right tracking number, warranty length, and so on). A version that calls more tools gets no credit for it.
-- **One trace source.** `ASHWA_TRACE_SOURCE=openinference` (default) uses the OpenInference instrumentor, which switches off ADK's built-in tracer itself; `adk` uses ADK's built-in tracing instead. Never both, or LLM and tool calls are counted twice.
-- **Interleaved repeats.** `--prompts v1 v2 --repeat 3` runs v1, v2, v1, v2, v1, v2, so slow API periods do not all land on one version. The report shows each metric's range across runs; a change inside both ranges is noise.
-- **Harness queries are not traced.** Evaluation and reset SQL use `sql_untraced`, so they do not appear as agent workload.
-
-### Run it
-
-You need Docker, Python 3.12 and a Claude API key.
-
-1. Start a local Langfuse next to this repository, using the example settings
-   (they create the project and API keys that `.env.example` expects):
-   ```bash
-   git clone https://github.com/langfuse/langfuse.git ../langfuse
-   cp docs/langfuse.docker-compose.override.example.yml ../langfuse/docker-compose.override.yml
-   (cd ../langfuse && docker compose up -d)
-   ```
-   Langfuse takes two to three minutes to come up at <http://localhost:3000>.
-2. Start the agent's database and create the Python environment:
-   ```bash
-   docker compose up -d --wait
-   python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
-   cp .env.example .env
-   ```
-3. Put your Claude API key in `.env` (`ANTHROPIC_API_KEY=...`), then check
-   credentials and models before spending anything:
-   ```bash
-   .venv/bin/python preflight.py --before-seed
-   ```
-4. Seed the data (24 local embedding calls; no API cost):
-   ```bash
-   .venv/bin/python seed.py
-   ```
-5. Full preflight, then a smoke test with 2 conversations (a few cents):
-   ```bash
-   .venv/bin/python preflight.py && .venv/bin/python workload.py --prompts v1 --limit 2
-   ```
-6. The experiment: v1 and v2, interleaved, three times each:
-   ```bash
-   .venv/bin/python workload.py --prompts v1 v2 --repeat 3
-   ```
-7. The ASHWA compare report for the batch (v1 runs vs v2 runs), with an HTML copy:
-   ```bash
-   .venv/bin/python ashwa_report.py --batch --html report.html
-   ```
-   For the latest run on its own: `.venv/bin/python ashwa_report.py --run --html report_latest_run.html`
-
-Your figures will differ from run to run, because the model is not
-deterministic and providers change models and prices over time. The direction
-of the effects is what should reproduce.
-
-If you hit rate limits (low API tiers, or Gemini's free tier), add `--pause 6`
-to step 6. 429 retries are handled automatically and show up as extra model
-time, which is itself something ASHWA should be able to spot.
-
-### Where to look in Langfuse
-
-<http://localhost:3000> (log in with the user from the override file) → Agent
-Test → filter by tag `prompt:v1` / `prompt:v2`, or by session ID prefix (the
-phase id). Each turn shows the ADK agent run, model calls, tool calls, and the
-`embed` / `sql:*` spans under each tool. Scores → `task_success` shows which
-conversations failed and why (in the comment).
+[`docs/EXPERIMENT.md`](docs/EXPERIMENT.md) has the hypothesis written before
+the first run, the fairness controls, and step-by-step instructions from a
+fresh clone.
 
 ## Known limitations (v0.1)
 
@@ -281,13 +184,11 @@ Ideas, roughly in order of usefulness. Contributions to any of them are welcome.
 
 ## Contributing
 
-Issues and pull requests are welcome. Two things help most:
+Issues and pull requests are welcome; see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Two things help most:
 
 - **Try it on a different agent or framework** and open an issue with what worked, what did not, and which span names or types needed special handling.
 - **Keep each report section a single readable SQL file.** The aim is that a DBA can open one file and see exactly how a number is calculated.
-
-For a change to how a metric is calculated, include a before-and-after of the
-report on the committed experiment data, so reviewers can see the effect.
 
 ## License
 
