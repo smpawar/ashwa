@@ -1,0 +1,16 @@
+<!doctype html><html lang='en' data-theme='light'><head><meta charset='utf-8'><title>Figure 2. Time model, v1 (A) vs v2 (B): share of Agent Time by component (self time).</title><style>
+:root{--bg:#fbfaf7;--fg:#1f2328;--muted:#5d6670;--line:#d9dde3;--head:#1f3a5f;--headfg:#fff;--alt:#f2f4f7;
+--worse:#b42318;--better:#1a7f37;--accent:#0f6e6e;--chip:#e7f3f2}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181c;--fg:#e6e8eb;--muted:#9aa4ae;--line:#2c323a;
+--head:#24405f;--headfg:#e6e8eb;--alt:#1b1f24;--worse:#ff7b72;--better:#56d364;--accent:#5fc7c0;--chip:#1d3332}}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:24px 16px}
+main{max-width:1100px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px;color:var(--accent)} h2{font-size:17px;margin:28px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.sub{color:var(--muted);margin:0 0 16px} .scope{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--muted)}
+.wrap{overflow-x:auto} table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0 4px}
+th{background:var(--head);color:var(--headfg);text-align:left;font-weight:600;padding:6px 8px;white-space:nowrap}
+td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top} tr:nth-child(even) td{background:var(--alt)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap} .worse{color:var(--worse);font-weight:600}
+.better{color:var(--better);font-weight:600} .new{background:var(--chip);color:var(--accent);border-radius:4px;padding:0 6px;font-size:12px}
+.traj{font-family:ui-monospace,Menlo,monospace;font-size:12.5px} .note{color:var(--muted);font-size:12.5px}
+</style><style>body{padding:24px} main{max-width:none} h2{margin-top:12px}</style></head><body><main><p class='scope'>A: prompt v1: 2026-10-09 04:17:53 to 2026-10-09 04:26:35 UTC 3 run(s), claude-opus-5-5/medium/BAAI/bge-small-en-v1.5<br>B: prompt v2: 2026-10-09 04:19:31 to 2026-10-09 04:28:27 UTC 3 run(s), claude-opus-5-5/medium/BAAI/bge-small-en-v1.5</p><h2>2. Time model (% Agent Time, self time)</h2><div class="wrap"><table><thead><tr><th>Metric</th><th class="n">A: prompt v1</th><th class="n">B: prompt v2</th><th class="n">Change</th></tr></thead><tbody><tr><td>model (LLM)</td><td class="n">98.8%</td><td class="n">99.2%</td><td class="n"><span class=''>+0%</span></td></tr><tr><td>orchestration</td><td class="n">0.8%</td><td class="n">0.5%</td><td class="n"><span class=''>-38%</span></td></tr><tr><td>embedding</td><td class="n">0.2%</td><td class="n">0.1%</td><td class="n"><span class=''>-40%</span></td></tr><tr><td>retrieval / database</td><td class="n">0.1%</td><td class="n">0.1%</td><td class="n"><span class=''>+38%</span></td></tr><tr><td>tool code</td><td class="n">0.0%</td><td class="n">0.0%</td><td class="n"><span class=''>-8%</span></td></tr></tbody></table></div></main></body></html>
