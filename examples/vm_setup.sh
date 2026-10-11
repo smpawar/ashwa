@@ -19,7 +19,7 @@ LANGFUSE_DIR="$(dirname "$REPO")/langfuse"
 
 # --- 1. System packages and Docker --------------------------------------------
 if command -v dnf >/dev/null; then
-  sudo dnf -y install git curl-minimal python3 python3-pip dnf-plugins-core
+  sudo dnf -y install git python3 python3-pip dnf-plugins-core     # curl ships with RHEL
   if ! command -v docker >/dev/null; then
     sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
     sudo dnf -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
