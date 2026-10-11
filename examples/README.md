@@ -35,6 +35,18 @@ and, with two variants, a compare report. For example:
   --html examples/trip_planner/report_a_vs_b.html
 ```
 
+## On a fresh VM
+
+`vm_setup.sh` does the whole setup for Gemini on RHEL 10 (or Debian/Ubuntu):
+Docker, a local Langfuse, the Python environment and `.env`. It makes no model
+calls.
+
+```bash
+git clone --branch examples/adk-agents https://github.com/smpawar/ashwa && cd ashwa
+GEMINI_AUTH=vertex bash examples/vm_setup.sh                      # the VM's service account
+GEMINI_AUTH=apikey GOOGLE_API_KEY=... bash examples/vm_setup.sh   # or a Gemini API key
+```
+
 ## What to look for
 
 - **trip_planner**: section 5 (trajectories) for the `trip_plan` and `flights`
