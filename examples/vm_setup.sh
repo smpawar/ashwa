@@ -35,6 +35,12 @@ DOCKER="docker"; docker info >/dev/null 2>&1 || DOCKER="sudo docker"
 # --- 2. Langfuse (UI :3000, ClickHouse :8123) ---------------------------------
 [ -d "$LANGFUSE_DIR" ] || git clone --depth 1 https://github.com/langfuse/langfuse.git "$LANGFUSE_DIR"
 cp "$REPO/docs/langfuse.docker-compose.override.example.yml" "$LANGFUSE_DIR/docker-compose.override.yml"
+# Langfuse's Postgres is only used inside the Docker network. Not publishing its
+# port avoids a clash with a Postgres already listening on the VM's port 5432.
+cat >> "$LANGFUSE_DIR/docker-compose.override.yml" <<'YML'
+  postgres:
+    ports: !reset []
+YML
 (cd "$LANGFUSE_DIR" && $DOCKER compose up -d)
 
 # --- 3. Python 3.12 environment (only what the examples and the report need) ---
