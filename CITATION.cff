@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use ASHWA in your work, please cite it as below."
+type: software
+title: "ASHWA: Agentic System Health & Workload Analysis"
+abstract: >-
+  An AWR-style diagnostic report for AI agents: load profile, time model, top
+  calls, efficiency ratios, trajectories and a compare-periods report, built
+  from the traces an agent sends to Langfuse.
+authors:
+  - family-names: Pawar
+    given-names: Sachin
+version: "0.1"
+repository-code: "https://github.com/smpawar/ashwa"
+license: Apache-2.0
+keywords:
+  - ai-agents
+  - observability
+  - performance-analysis
+  - langfuse
+  - clickhouse
+  - oracle-awr
