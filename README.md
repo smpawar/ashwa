@@ -63,21 +63,24 @@ Same model, same tools, same workload, three interleaved runs of each version
 
 | Per turn | v1 | v2 | Change |
 |---|---|---|---|
-| Agent Time (s) | 4.35 | 4.40 | within run-to-run noise |
 | Tool calls | 1.38 | 1.74 | **+26%** |
 | Embedding calls | 0.49 | 0.90 | **+86%** |
 | Cost ($) | 0.0165 | 0.0184 | **+12%** |
 | Cost per successful conversation ($) | 0.0198 | 0.0237 | **+20%** |
 | Task success | 100% | 93.3% | −6.7 points |
 
-Latency did not move: the extra retrieval calls take milliseconds, and model
-time is 99% of Agent Time in both versions. The change shows up only in the
-load profile and the trajectories:
-refunds went from `lookup_order → issue_refund` to
+The effects show up in the load profile and the trajectories: refunds went
+from `lookup_order → issue_refund` to
 `lookup_order → search_knowledge_base → issue_refund`, and one refund request
 stopped being processed because the agent, having read the returns policy,
-asked the customer a question instead. A latency dashboard would have shown
-nothing.
+asked the customer a question instead.
+
+**An observation on latency.** In this batch, Agent Time per turn was about the
+same for both versions (4.35 s and 4.40 s, inside the run-to-run spread). That
+fits the time model: a knowledge-base search takes about 17 ms, and model calls
+are 99% of Agent Time in both versions. Three runs per version are not enough
+to say whether latency changed, so treat this as a measurement from one batch,
+not a finding.
 
 ![Every metric that moved 5% or more](figures/fig1_biggest_changes.png)
 

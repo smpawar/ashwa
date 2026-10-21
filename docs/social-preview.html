@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- Source of docs/social-preview.png. Render at 1280x640:
+     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+       --window-size=1280,640 --screenshot=docs/social-preview.png docs/social-preview.html -->
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:640px;background:#0f1720;color:#e8edf2;font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;padding:64px 80px;display:flex;flex-direction:column;justify-content:space-between}
+h1{font-size:104px;letter-spacing:-2px;font-weight:800}
+h1 span{color:#f5a623}
+.sub{font-size:40px;margin-top:8px;color:#c9d3dd}
+.tag{font-size:26px;color:#8fa1b3;margin-top:14px}
+.rows{display:flex;flex-direction:column;gap:18px}
+.row{display:flex;align-items:center;gap:14px;font-family:"SF Mono",Menlo,monospace;font-size:25px}
+.lab{width:150px;color:#8fa1b3;font-family:-apple-system,Arial,sans-serif;font-size:24px}
+.b{padding:10px 18px;border-radius:8px;background:#1d2a38;border:1px solid #33475c}
+.new{background:#3a2a10;border-color:#f5a623;color:#ffd58a}
+.ar{color:#5f7488}
+.foot{display:flex;justify-content:space-between;font-size:24px;color:#8fa1b3}
+</style></head><body>
+<div><h1>ASH<span>WA</span></h1>
+<div class="sub">An AWR-style diagnostic report for AI agents</div>
+<div class="tag">Load profile · Time model · Top calls · Trajectories · Compare periods</div></div>
+<div class="rows">
+<div class="row"><div class="lab">Prompt v1</div><div class="b">lookup_order</div><div class="ar">→</div><div class="b">issue_refund</div></div>
+<div class="row"><div class="lab">Prompt v2</div><div class="b">lookup_order</div><div class="ar">→</div><div class="b new">search_knowledge_base</div><div class="ar">→</div><div class="b">issue_refund</div></div>
+</div>
+<div class="foot"><div>One added sentence: +26% tool calls, +12% cost, success 100% → 93%</div><div>github.com/smpawar/ashwa</div></div>
+</body></html>
