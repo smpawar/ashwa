@@ -42,7 +42,7 @@ Docker, a local Langfuse, the Python environment and `.env`. It makes no model
 calls.
 
 ```bash
-git clone --branch examples/adk-agents https://github.com/smpawar/ashwa && cd ashwa
+git clone https://github.com/smpawar/ashwa && cd ashwa
 GEMINI_AUTH=vertex bash examples/vm_setup.sh                      # the VM's service account
 GEMINI_AUTH=apikey GOOGLE_API_KEY=... bash examples/vm_setup.sh   # or a Gemini API key
 ```

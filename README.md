@@ -19,8 +19,13 @@ Python script runs them for one time window (like `awrrpt.sql`) or two (like
 [Use it on your own agent](#use-it-on-your-own-agent) ·
 [AWR to ASHWA mapping](#why-the-awr-method-applied-to-agents) ·
 [Report sections](#the-report-sections) ·
+[More agents](#more-agents-to-try-it-on) ·
 [Reproduce the experiment](docs/EXPERIMENT.md) ·
 [Roadmap](#roadmap)
+
+**See a report first:** [compare report](https://smpawar.github.io/ashwa/report.html)
+(prompt v1 against v2) · [single-run report](https://smpawar.github.io/ashwa/report_latest_run.html).
+Both are the HTML files in this repository, served as pages.
 
 ![Refund trajectories before and after a one-sentence prompt change](figures/fig3_refund_trajectories.png)
 
@@ -84,8 +89,9 @@ not a finding.
 
 ![Every metric that moved 5% or more](figures/fig1_biggest_changes.png)
 
-The full reports are in the repository: [`report.html`](report.html) (compare)
-and [`report_latest_run.html`](report_latest_run.html) (single run), with the
+The full reports are in the repository and viewable online:
+[`report.html`](https://smpawar.github.io/ashwa/report.html) (compare)
+and [`report_latest_run.html`](https://smpawar.github.io/ashwa/report_latest_run.html) (single run), with the
 run records in [`runs.json`](runs.json).
 
 ## Use it on your own agent
@@ -176,6 +182,27 @@ structure to agents:
 The compare report adds **6. Biggest changes** (every metric that moved 5% or
 more, largest first, marked better or worse) and, in batch mode, **Run-to-run
 spread** (each run measured separately; overlapping ranges mean noise).
+
+## More agents to try it on
+
+[`examples/`](examples/README.md) has two more Google ADK agents, built to be
+pointed at ASHWA. Neither needs a database; the tools read in-memory data, so
+Langfuse and a model API key are the only requirements.
+
+| Example | Shape | Variant `a` | Variant `b` |
+|---|---|---|---|
+| `examples/trip_planner` | One agent, four tools (weather, flights, hotels, currency) | Base prompt | Base prompt + "always check the weather first" |
+| `examples/helpdesk_team` | A coordinator that hands off to an account agent and a device agent | The three-agent team | One agent holding all six tools |
+
+```bash
+.venv/bin/python examples/trip_planner/run.py --variants a b
+.venv/bin/python examples/helpdesk_team/run.py --variants a b
+```
+
+Each run prints the `ashwa_report.py` commands for its single-run and compare
+reports. Hand-offs between agents appear as `transfer_to_agent` tool calls in
+the trajectories. [`examples/vm_setup.sh`](examples/vm_setup.sh) sets up a
+fresh Linux VM (Docker, Langfuse, Python, `.env`) to run them on Gemini.
 
 ## Reproduce the experiment
 
